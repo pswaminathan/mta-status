@@ -6,7 +6,7 @@ Create a web app to display NYC MTA Transit Status. Look and feel is up to you, 
 
 ## Details:
 
-- Data source (XML): http://mta.info/status/serviceStatus.txt (Yes, it says .txt, and the Content-Type header is text/plain, but the content is XML.)
+- Data source (XML): http://web.mta.info/status/serviceStatus.txt (Yes, it says .txt, and the Content-Type header is text/plain, but the content is XML.)
 
 ## Content:
 
