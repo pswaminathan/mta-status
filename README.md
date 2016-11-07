@@ -23,4 +23,16 @@ Create a web app to display NYC MTA Transit Status. Look and feel is up to you, 
 
 - Source and link to app, PRed to this repository.  Earlier is also perfectly fine, and feel free to send over any questions as an issue in this repository (after first checking the Wiki to see if your question has already been answered there).
 
-Example app screens forthcoming!
+## Example Screens
+
+- Choose service:
+
+![Screen 1](images/bootstrap/Screen Shot 2014-12-02 at 5.51.07 PM.png)
+
+- Good service:
+
+![Screen 2](images/bootstrap/Screen Shot 2014-12-02 at 5.51.36 PM.png)
+
+- Service changes:
+
+![Screen 3](images/bootstrap/Screen Shot 2014-12-02 at 5.52.07 PM.png)
