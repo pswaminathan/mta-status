@@ -25,14 +25,14 @@ Create a web app to display NYC MTA Transit Status. Look and feel is up to you, 
 
 ## Example Screens
 
-- Choose service:
+### Choose service:
 
 ![Screen 1](images/bootstrap/Screen Shot 2014-12-02 at 5.51.07 PM.png)
 
-- Good service:
+### Good service:
 
 ![Screen 2](images/bootstrap/Screen Shot 2014-12-02 at 5.51.36 PM.png)
 
-- Service changes:
+### Service changes:
 
 ![Screen 3](images/bootstrap/Screen Shot 2014-12-02 at 5.52.07 PM.png)
