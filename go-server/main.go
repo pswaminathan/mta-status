@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -107,20 +108,16 @@ func generateTable(service string, result *Result) *bytes.Buffer {
 
 func getLines(service string, result *Result) []Line {
 	var lines []Line
-	switch service {
+	switch strings.ToLower(service) {
 	case "subway":
 		lines = result.Subway
 	case "bus":
 		lines = result.Bus
-	case "Subway":
-		lines = result.Subway
-	case "Bus":
-		lines = result.Bus
-	case "BT":
+	case "bt":
 		lines = result.BT
-	case "LIRR":
+	case "lirr":
 		lines = result.LIRR
-	case "MetroNorth":
+	case "metronorth":
 		lines = result.MetroNorth
 	}
 	return lines
