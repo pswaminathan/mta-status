@@ -1,10 +1,9 @@
 package main
 
 import (
-	"bytes"
 	"encoding/xml"
 	"flag"
-	"io"
+	"html/template"
 	"log"
 	"net/http"
 	"net/url"
@@ -13,25 +12,25 @@ import (
 )
 
 var (
-	th       = `<table><tr><th>Line Name</th><th>Status</th><th>Info</th></tr>`
-	tf       = `</table>`
 	port     int
 	certPath string
 	keyPath  string
+	insecure bool
 )
 
 func init() {
 	flag.IntVar(&port, "port", 443, "Port for server")
 	flag.StringVar(&certPath, "cert", "/etc/letsencrypt/live/pswa.me/fullchain.pem", "SSL certificate Location")
 	flag.StringVar(&keyPath, "key", "/etc/letsencrypt/keys/0000_key-certbot.pem", "SSL key Location")
+	flag.BoolVar(&insecure, "insecure", false, "Run over http (useful for local testing)")
 }
 
 type Line struct {
-	Name   string `xml:"name"`
-	Status string `xml:"status"`
-	Text   string `xml:"text"`
-	Date   string `xml:"Date"`
-	Time   string `xml:"Time"`
+	Name   string        `xml:"name"`
+	Status string        `xml:"status"`
+	Text   template.HTML `xml:"text"`
+	Date   string        `xml:"Date"`
+	Time   string        `xml:"Time"`
 }
 
 type Result struct {
@@ -54,56 +53,40 @@ func main() {
 	rp := NewReverseProxy(u)
 	http.Handle("/status/serviceStatus.txt", rp)
 	http.HandleFunc("/service/", getServiceData)
-	log.Fatal(http.ListenAndServeTLS(
-		":"+strconv.Itoa(port),
-		certPath,
-		keyPath,
-		nil,
-	))
+
+	addr := ":" + strconv.Itoa(port)
+	if insecure {
+		log.Fatal(http.ListenAndServe(addr, nil))
+	} else {
+		log.Fatal(http.ListenAndServeTLS(addr, certPath, keyPath, nil))
+	}
 }
 
-func getServiceData(w http.ResponseWriter, r *http.Request) {
-	service := r.URL.Path[9:]
-	body, _ := getMTAData()
-	defer body.Close()
+func getServiceData(rw http.ResponseWriter, r *http.Request) {
 	var res Result
-	xml.NewDecoder(body).Decode(&res)
-	buf := generateTable(service, &res)
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	buf.WriteTo(w)
+	// TODO do some real error handling here
+	_ = getMTAData(&res)
+
+	service := r.URL.Path[9:]
+	lines := getLines(service, &res)
+	// TODO nil check here
+	rw.Header().Set("Access-Control-Allow-Origin", "*")
+	serializeToHTML(rw, lines)
 }
 
-func getMTAData() (io.ReadCloser, error) {
+func getMTAData(data interface{}) error {
 	resp, err := http.Get("http://web.mta.info/status/serviceStatus.txt")
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return resp.Body, nil
+	defer resp.Body.Close()
+	return xml.NewDecoder(resp.Body).Decode(data)
 }
 
-func generateTable(service string, result *Result) *bytes.Buffer {
-	buf := new(bytes.Buffer)
-	lines := getLines(service, result)
-	if lines == nil {
-		return buf
-	}
-	buf.WriteString(th)
-	for _, line := range lines {
-		buf.WriteString("<tr>")
-		buf.WriteString("<td class=\"name\">")
-		buf.WriteString(line.Name)
-		buf.WriteString("</td>")
-		buf.WriteString("<td class=\"status\">")
-		buf.WriteString(line.Status)
-		buf.WriteString("</td>")
-		buf.WriteString("<td class=\"text\">")
-		buf.WriteString(line.Text)
-		buf.WriteString("</td>")
-		buf.WriteString("</tr>")
-	}
-	buf.WriteString(tf)
-	return buf
+func serializeToHTML(rw http.ResponseWriter, lines []Line) {
+	t := template.Must(template.New("status_table").Parse(tableTemplate))
+	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+	t.Execute(rw, lines)
 }
 
 func getLines(service string, result *Result) []Line {
@@ -122,3 +105,11 @@ func getLines(service string, result *Result) []Line {
 	}
 	return lines
 }
+
+var (
+	tableTemplate = `<table class="status-table">
+	<tr class="status-headers"><th>Line Name</th><th>Status</th><th>More Information</th></tr>
+	{{range $i, $e := .}}<tr class="status-row" id="status-row-{{$i}}"><td class="line-name">{{$e.Name}}</td> <td class="line-status">{{$e.Status}}</td><td class="line-text">{{$e.Text}}</td></tr>{{end}}
+</table>
+`
+)

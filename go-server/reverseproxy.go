@@ -32,7 +32,7 @@ func NewReverseProxy(target *url.URL) *httputil.ReverseProxy {
 			req.Header.Set("User-Agent", "")
 		}
 	}
-	return &httputil.ReverseProxy{Director: director, Transport: &Transport{}}
+	return &httputil.ReverseProxy{Director: director, Transport: &CORSTransport{}}
 }
 
 func singleJoiningSlash(a, b string) string {
@@ -47,11 +47,14 @@ func singleJoiningSlash(a, b string) string {
 	return a + b
 }
 
-type Transport struct {
+// CORSTransport is an implementation of an http.Transport that adds
+// CORS headers to the *response* headers. Useful as a transport for
+// httputil.ReverseProxy when you just want a proxy that adds CORS support.
+type CORSTransport struct {
 	Base http.RoundTripper
 }
 
-func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
+func (t *CORSTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if t.Base == nil {
 		t.Base = http.DefaultTransport
 	}
